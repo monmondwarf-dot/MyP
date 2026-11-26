@@ -1,0 +1,1684 @@
+<!-- ============================================
+     FILE: index.html
+     MỤC ĐÍCH: Trang web mời hẹn hò cute & interactive
+     PHIÊN BẢN: 2.0 — thêm time picker & background music
+     ============================================ -->
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>💌 Lời mời đặc biệt dành cho bạn</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💌</text></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+  <style>
+    /* ===== CSS CUSTOM PROPERTIES ===== */
+    :root {
+      --pink-100: #fff0f3;
+      --pink-200: #ffc2d1;
+      --pink-300: #ffb3c6;
+      --pink-400: #ff8fab;
+      --pink-500: #ff6b8a;
+      --pink-600: #e84670;
+      --pink-700: #c9184a;
+      --rose-glow: rgba(255, 107, 138, 0.3);
+      --white: #ffffff;
+      --text-dark: #4a2040;
+      --text-medium: #6b3a5d;
+      --text-light: #8b5a7d;
+      --shadow-soft: 0 4px 20px rgba(255, 107, 138, 0.2);
+      --shadow-medium: 0 8px 32px rgba(255, 107, 138, 0.3);
+      --shadow-strong: 0 12px 48px rgba(255, 107, 138, 0.35);
+      --radius-sm: 12px;
+      --radius-md: 16px;
+      --radius-lg: 24px;
+      --radius-xl: 32px;
+      --radius-full: 9999px;
+      --transition-fast: 0.2s ease;
+      --transition-normal: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-slow: 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      --font-main: 'Quicksand', 'Segoe UI', sans-serif;
+    }
+
+    /* ===== RESET & BASE ===== */
+    *, *::before, *::after {
+      margin: 0; padding: 0; box-sizing: border-box;
+    }
+
+    html { font-size: 16px; scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font-main);
+      color: var(--text-dark);
+      min-height: 100vh;
+      overflow-x: hidden;
+      background: linear-gradient(135deg, var(--pink-100) 0%, var(--pink-200) 50%, var(--pink-300) 100%);
+      background-attachment: fixed;
+    }
+
+    /* ===== FLOATING HEARTS BACKGROUND ===== */
+    .hearts-bg {
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none; z-index: 0; overflow: hidden;
+    }
+
+    .floating-heart {
+      position: absolute; bottom: -60px;
+      font-size: 1.2rem; opacity: 0;
+      animation: floatHeart linear infinite;
+    }
+
+    @keyframes floatHeart {
+      0%   { transform: translateY(0) rotate(0deg) scale(0.5); opacity: 0; }
+      10%  { opacity: 0.6; }
+      50%  { opacity: 0.4; }
+      90%  { opacity: 0.1; }
+      100% { transform: translateY(-110vh) rotate(720deg) scale(1.2); opacity: 0; }
+    }
+
+    /* ===== MAIN CONTAINER ===== */
+    .app-container {
+      position: relative; z-index: 1;
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh; padding: 20px;
+    }
+
+    /* ===== CARD ===== */
+    .card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      border-radius: var(--radius-xl);
+      padding: 48px 40px;
+      max-width: 520px; width: 100%;
+      box-shadow: var(--shadow-strong);
+      text-align: center;
+      animation: cardEntry 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    @keyframes cardEntry {
+      from { opacity: 0; transform: scale(0.8) translateY(40px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    /* ===== SCREENS ===== */
+    .screen { display: none; }
+    .screen.active {
+      display: block;
+      animation: fadeSlideIn 0.6s ease forwards;
+    }
+
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ===== TYPOGRAPHY ===== */
+    .emoji-large {
+      font-size: 4rem; display: block; margin-bottom: 16px;
+      animation: bounceEmoji 2s ease-in-out infinite;
+    }
+
+    @keyframes bounceEmoji {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-12px); }
+    }
+
+    .title {
+      font-size: 1.8rem; font-weight: 700;
+      color: var(--pink-700); margin-bottom: 12px; line-height: 1.3;
+    }
+
+    .subtitle {
+      font-size: 1.05rem; font-weight: 500;
+      color: var(--text-medium); line-height: 1.7; margin-bottom: 24px;
+    }
+
+    .highlight { color: var(--pink-600); font-weight: 700; }
+
+    /* ===== BUTTONS ===== */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 14px 36px; border: none; border-radius: var(--radius-full);
+      font-family: var(--font-main); font-size: 1rem; font-weight: 700;
+      cursor: pointer; transition: all var(--transition-normal);
+      outline: none; position: relative; overflow: hidden;
+    }
+
+    .btn::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.3), transparent);
+      opacity: 0; transition: opacity var(--transition-fast);
+    }
+    .btn:hover::after { opacity: 1; }
+    .btn:active { transform: scale(0.96); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--pink-500), var(--pink-600));
+      color: var(--white);
+      box-shadow: 0 4px 16px rgba(255, 107, 138, 0.4);
+    }
+    .btn-primary:hover {
+      box-shadow: 0 6px 24px rgba(255, 107, 138, 0.5);
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      background: var(--white); color: var(--text-medium);
+      border: 2px solid var(--pink-200); box-shadow: var(--shadow-soft);
+    }
+    .btn-secondary:hover {
+      border-color: var(--pink-400); color: var(--pink-600);
+      transform: translateY(-2px);
+    }
+
+    .btn-start { padding: 16px 48px; font-size: 1.1rem; margin-top: 8px; }
+
+    .btn:disabled {
+      opacity: 0.5; cursor: not-allowed; transform: none !important;
+    }
+
+    /* ===== SPINNER ===== */
+    .spinner {
+      display: inline-block; width: 18px; height: 18px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top-color: white; border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===== SCREEN 1: GREETING ===== */
+    .greeting-sparkles { position: relative; display: inline-block; }
+
+    .sparkle {
+      position: absolute; font-size: 1rem;
+      animation: sparkle 2s ease-in-out infinite;
+    }
+    .sparkle:nth-child(1) { top: -10px; left: -20px; animation-delay: 0s; }
+    .sparkle:nth-child(2) { top: -5px; right: -20px; animation-delay: 0.5s; }
+    .sparkle:nth-child(3) { bottom: 0; left: -15px; animation-delay: 1s; }
+
+    @keyframes sparkle {
+      0%, 100% { opacity: 0.3; transform: scale(0.8); }
+      50%      { opacity: 1; transform: scale(1.2); }
+    }
+
+    .envelope-container {
+      position: relative; width: 120px; height: 100px;
+      margin: 0 auto 20px; cursor: pointer;
+    }
+
+    .envelope {
+      width: 120px; height: 80px;
+      background: var(--pink-400); border-radius: 0 0 12px 12px;
+      position: absolute; bottom: 0; box-shadow: var(--shadow-soft);
+    }
+    .envelope::before {
+      content: ''; position: absolute; top: -40px; left: 0;
+      width: 0; height: 0;
+      border-left: 60px solid transparent;
+      border-right: 60px solid transparent;
+      border-bottom: 40px solid var(--pink-500);
+    }
+
+    .letter {
+      position: absolute; width: 90px; height: 60px;
+      background: white; border-radius: 4px;
+      left: 15px; bottom: 30px;
+      transition: all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .envelope-container:hover .letter,
+    .envelope-container.opened .letter {
+      transform: translateY(-50px);
+    }
+
+    /* ===== SCREEN 2: INVITATION ===== */
+    .buttons-wrapper {
+      display: flex; align-items: center; justify-content: center;
+      gap: 16px; flex-wrap: wrap; margin-top: 28px; min-height: 80px;
+    }
+
+    .btn-accept { transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); z-index: 2; }
+    .btn-reject { transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); z-index: 1; }
+
+    .reject-message {
+      margin-top: 20px; min-height: 56px;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      opacity: 0; transition: all var(--transition-normal);
+    }
+    .reject-message.show { opacity: 1; animation: shakeMessage 0.5s ease; }
+
+    .reject-message .emoji { font-size: 2rem; animation: sadBounce 1s ease-in-out infinite; }
+    .reject-message .text { font-size: 1rem; font-weight: 600; color: var(--pink-600); }
+
+    @keyframes sadBounce {
+      0%, 100% { transform: rotate(0deg); }
+      25%      { transform: rotate(-10deg); }
+      75%      { transform: rotate(10deg); }
+    }
+
+    @keyframes shakeMessage {
+      0%, 100% { transform: translateX(0); }
+      20%      { transform: translateX(-8px); }
+      40%      { transform: translateX(8px); }
+      60%      { transform: translateX(-4px); }
+      80%      { transform: translateX(4px); }
+    }
+
+    /* Celebration */
+    .celebration { display: none; }
+    .celebration.show {
+      display: block;
+      animation: celebrateIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    @keyframes celebrateIn {
+      from { opacity: 0; transform: scale(0.3) rotate(-10deg); }
+      to   { opacity: 1; transform: scale(1) rotate(0deg); }
+    }
+
+    .celebrate-emoji { font-size: 5rem; animation: celebrateBounce 0.6s ease infinite alternate; }
+
+    @keyframes celebrateBounce {
+      from { transform: scale(1) rotate(-5deg); }
+      to   { transform: scale(1.15) rotate(5deg); }
+    }
+
+    /* ===== SCREEN 3: DATE + TIME PICKER ===== */
+    .picker-section {
+      margin: 24px 0 8px;
+    }
+
+    .picker-section-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--pink-500);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .date-picker-row {
+      display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+    }
+
+    .select-wrapper {
+      position: relative; flex: 1; min-width: 100px; max-width: 160px;
+    }
+
+    .select-wrapper label {
+      display: block; font-size: 0.8rem; font-weight: 600;
+      color: var(--text-light); margin-bottom: 6px;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+
+    .select-wrapper select {
+      width: 100%; padding: 12px 16px;
+      border: 2px solid var(--pink-200); border-radius: var(--radius-md);
+      background: var(--white); font-family: var(--font-main);
+      font-size: 1rem; font-weight: 600; color: var(--text-dark);
+      cursor: pointer; transition: all var(--transition-fast);
+      appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23ff6b8a' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+    }
+
+    .select-wrapper select:focus {
+      outline: none; border-color: var(--pink-500);
+      box-shadow: 0 0 0 4px var(--rose-glow);
+    }
+    .select-wrapper select:hover { border-color: var(--pink-400); }
+
+    /* ===== TIME PICKER ROW ===== */
+    .time-picker-row {
+      display: flex; gap: 12px; justify-content: center;
+      align-items: center; flex-wrap: wrap;
+    }
+
+    .time-separator {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--pink-500);
+      margin-top: 20px;
+    }
+
+    .time-period-wrapper {
+      display: flex; gap: 8px; margin-top: 20px;
+    }
+
+    .time-period-btn {
+      padding: 10px 20px;
+      border: 2px solid var(--pink-200);
+      border-radius: var(--radius-md);
+      background: var(--white);
+      font-family: var(--font-main);
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-medium);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .time-period-btn:hover {
+      border-color: var(--pink-400);
+    }
+
+    .time-period-btn.active {
+      background: linear-gradient(135deg, var(--pink-500), var(--pink-600));
+      color: white;
+      border-color: var(--pink-500);
+      box-shadow: 0 4px 12px rgba(255, 107, 138, 0.3);
+    }
+
+    /* ===== TIME PRESETS ===== */
+    .time-presets {
+      display: flex; gap: 8px; justify-content: center;
+      flex-wrap: wrap; margin-top: 16px;
+    }
+
+    .time-preset {
+      padding: 8px 16px;
+      border: 2px solid var(--pink-200);
+      border-radius: var(--radius-full);
+      background: var(--white);
+      font-family: var(--font-main);
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-medium);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .time-preset:hover {
+      border-color: var(--pink-400);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .time-preset.active {
+      background: var(--pink-100);
+      border-color: var(--pink-500);
+      color: var(--pink-600);
+    }
+
+    /* ===== SCREEN 4: ACTIVITIES ===== */
+    .activities-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      gap: 12px; margin: 24px 0;
+    }
+
+    .activity-card {
+      position: relative; background: var(--white);
+      border: 2px solid var(--pink-200); border-radius: var(--radius-md);
+      padding: 20px 12px; cursor: pointer;
+      transition: all var(--transition-normal); user-select: none;
+    }
+    .activity-card:hover {
+      border-color: var(--pink-400); transform: translateY(-4px);
+      box-shadow: var(--shadow-medium);
+    }
+    .activity-card.selected {
+      border-color: var(--pink-500);
+      background: linear-gradient(135deg, var(--pink-100), rgba(255, 179, 198, 0.3));
+      box-shadow: 0 4px 16px rgba(255, 107, 138, 0.25);
+    }
+    .activity-card.selected::after {
+      content: '✓'; position: absolute; top: 8px; right: 10px;
+      width: 22px; height: 22px;
+      background: var(--pink-500); color: white; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem; font-weight: 700;
+      animation: checkIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes checkIn { from { transform: scale(0); } to { transform: scale(1); } }
+
+    .activity-card .activity-icon { font-size: 2.2rem; margin-bottom: 8px; display: block; }
+    .activity-card .activity-name { font-size: 0.9rem; font-weight: 700; color: var(--text-dark); }
+    .activity-card input[type="checkbox"] { display: none; }
+
+    /* ===== SCREEN 5: THANK YOU ===== */
+    .summary-box {
+      background: linear-gradient(135deg, var(--pink-100), rgba(255, 179, 198, 0.2));
+      border-radius: var(--radius-md); padding: 20px; margin: 20px 0; text-align: left;
+    }
+
+    .summary-item {
+      display: flex; align-items: flex-start; gap: 12px; padding: 8px 0;
+    }
+    .summary-item + .summary-item { border-top: 1px solid var(--pink-200); }
+    .summary-item .icon { font-size: 1.3rem; flex-shrink: 0; margin-top: 2px; }
+    .summary-item .info { flex: 1; }
+    .summary-item .info .label {
+      font-size: 0.75rem; font-weight: 600; color: var(--text-light);
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .summary-item .info .value {
+      font-size: 1rem; font-weight: 700; color: var(--text-dark); margin-top: 2px;
+    }
+
+    .countdown-note {
+      font-size: 0.95rem; color: var(--pink-600); font-weight: 600;
+      margin-top: 16px; padding: 12px;
+      background: rgba(255, 107, 138, 0.08); border-radius: var(--radius-sm);
+    }
+
+    .email-section { margin-top: 20px; }
+
+    .input-group { display: flex; gap: 8px; margin-top: 12px; }
+
+    .input-group input {
+      flex: 1; padding: 12px 16px;
+      border: 2px solid var(--pink-200); border-radius: var(--radius-md);
+      font-family: var(--font-main); font-size: 0.95rem;
+      font-weight: 500; color: var(--text-dark);
+      transition: all var(--transition-fast);
+    }
+    .input-group input:focus {
+      outline: none; border-color: var(--pink-500);
+      box-shadow: 0 0 0 4px var(--rose-glow);
+    }
+    .input-group input::placeholder { color: var(--pink-300); }
+
+    .error-msg {
+      font-size: 0.85rem; color: #e74c3c;
+      font-weight: 600; margin-top: 8px; min-height: 20px;
+    }
+
+    /* ===== PROGRESS DOTS ===== */
+    .progress-dots {
+      display: flex; justify-content: center; gap: 8px; margin-bottom: 28px;
+    }
+    .dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--pink-200); transition: all var(--transition-normal);
+    }
+    .dot.active { background: var(--pink-500); width: 28px; border-radius: 5px; }
+    .dot.done { background: var(--pink-400); }
+
+    /* ===== CONFETTI ===== */
+    #confetti-canvas {
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none; z-index: 1000;
+    }
+
+    /* ===== TOAST ===== */
+    .toast {
+      position: fixed; bottom: 24px; left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--white); border: 2px solid var(--pink-300);
+      border-radius: var(--radius-full); padding: 12px 24px;
+      font-family: var(--font-main); font-size: 0.9rem;
+      font-weight: 600; color: var(--text-dark);
+      box-shadow: var(--shadow-medium); z-index: 2000;
+      transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+      white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* =======================================================
+       MUSIC PLAYER — nút điều khiển nhạc floating
+       ======================================================= */
+    .music-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 500;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.7);
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: var(--shadow-medium);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      transition: all var(--transition-normal);
+      animation: musicBtnEntry 1s 1.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+
+    @keyframes musicBtnEntry {
+      from { opacity: 0; transform: scale(0) rotate(-180deg); }
+      to   { opacity: 1; transform: scale(1) rotate(0deg); }
+    }
+
+    .music-toggle:hover {
+      transform: scale(1.1);
+      box-shadow: var(--shadow-strong);
+    }
+
+    .music-toggle.playing {
+      background: linear-gradient(135deg, var(--pink-400), var(--pink-500));
+      border-color: var(--pink-500);
+      animation: musicPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes musicPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255, 107, 138, 0.4), var(--shadow-medium); }
+      50%      { box-shadow: 0 0 0 12px rgba(255, 107, 138, 0), var(--shadow-medium); }
+    }
+
+    /* Music note animation khi đang play */
+    .music-notes {
+      position: fixed;
+      top: 20px;
+      right: 78px;
+      z-index: 499;
+      display: flex;
+      gap: 4px;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      pointer-events: none;
+    }
+
+    .music-notes.show { opacity: 1; }
+
+    .music-note {
+      font-size: 0.9rem;
+      animation: noteFloat 2s ease-in-out infinite;
+    }
+    .music-note:nth-child(1) { animation-delay: 0s; }
+    .music-note:nth-child(2) { animation-delay: 0.3s; }
+    .music-note:nth-child(3) { animation-delay: 0.6s; }
+
+    @keyframes noteFloat {
+      0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.5; }
+      50%      { transform: translateY(-8px) rotate(10deg); opacity: 1; }
+    }
+
+    /* Music tooltip */
+    .music-tooltip {
+      position: fixed;
+      top: 78px;
+      right: 20px;
+      z-index: 500;
+      background: var(--white);
+      border: 2px solid var(--pink-200);
+      border-radius: var(--radius-md);
+      padding: 10px 16px;
+      font-family: var(--font-main);
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-medium);
+      box-shadow: var(--shadow-soft);
+      opacity: 0;
+      transform: translateY(-8px);
+      transition: all 0.3s ease;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .music-tooltip.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ===== VISUALIZER BARS (trong nút music) ===== */
+    .visualizer {
+      display: none;
+      align-items: flex-end;
+      gap: 2px;
+      height: 18px;
+    }
+
+    .music-toggle.playing .visualizer { display: flex; }
+    .music-toggle.playing .music-icon-static { display: none; }
+
+    .viz-bar {
+      width: 3px;
+      background: white;
+      border-radius: 2px;
+      animation: vizBounce 0.8s ease-in-out infinite alternate;
+    }
+    .viz-bar:nth-child(1) { height: 6px; animation-delay: 0s; }
+    .viz-bar:nth-child(2) { height: 12px; animation-delay: 0.15s; }
+    .viz-bar:nth-child(3) { height: 8px; animation-delay: 0.3s; }
+    .viz-bar:nth-child(4) { height: 16px; animation-delay: 0.45s; }
+    .viz-bar:nth-child(5) { height: 10px; animation-delay: 0.6s; }
+
+    @keyframes vizBounce {
+      from { transform: scaleY(0.4); }
+      to   { transform: scaleY(1); }
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+      .card { padding: 36px 24px; border-radius: var(--radius-lg); }
+      .title { font-size: 1.5rem; }
+      .subtitle { font-size: 0.95rem; }
+      .emoji-large { font-size: 3.2rem; }
+      .activities-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+      .activity-card { padding: 16px 8px; }
+      .activity-card .activity-icon { font-size: 1.8rem; }
+      .activity-card .activity-name { font-size: 0.8rem; }
+      .date-picker-row, .time-picker-row { gap: 8px; }
+      .select-wrapper { min-width: 85px; }
+      .btn { padding: 12px 28px; font-size: 0.95rem; }
+      .input-group { flex-direction: column; }
+      .music-toggle { width: 46px; height: 46px; font-size: 1.2rem; top: 14px; right: 14px; }
+      .music-notes { top: 14px; right: 66px; }
+      .music-tooltip { top: 66px; right: 14px; }
+    }
+
+    @media (max-width: 380px) {
+      .card { padding: 28px 16px; }
+      .title { font-size: 1.3rem; }
+      .buttons-wrapper { gap: 12px; }
+      .time-presets { gap: 6px; }
+      .time-preset { padding: 6px 12px; font-size: 0.75rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Floating Hearts Background -->
+  <div class="hearts-bg" id="heartsBg" aria-hidden="true"></div>
+
+  <!-- Confetti Canvas -->
+  <canvas id="confetti-canvas" aria-hidden="true"></canvas>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast"></div>
+
+  <!-- ===== MUSIC PLAYER CONTROLS ===== -->
+  <button class="music-toggle" id="musicToggle" onclick="toggleMusic()" aria-label="Bật/tắt nhạc nền">
+    <span class="music-icon-static">🎵</span>
+    <div class="visualizer">
+      <div class="viz-bar"></div>
+      <div class="viz-bar"></div>
+      <div class="viz-bar"></div>
+      <div class="viz-bar"></div>
+      <div class="viz-bar"></div>
+    </div>
+  </button>
+
+  <div class="music-notes" id="musicNotes">
+    <span class="music-note">♪</span>
+    <span class="music-note">♫</span>
+    <span class="music-note">♪</span>
+  </div>
+
+  <div class="music-tooltip" id="musicTooltip">🎵 Nhấn để bật nhạc nền</div>
+
+  <!-- ===== MAIN APP ===== -->
+  <div class="app-container">
+    <div class="card">
+
+      <!-- ==================== SCREEN 1: GREETING ==================== -->
+      <div class="screen active" id="screen-greeting">
+        <div class="envelope-container" id="envelope" role="img" aria-label="Phong bì thư">
+          <div class="letter">💌</div>
+          <div class="envelope"></div>
+        </div>
+
+        <div class="greeting-sparkles">
+          <span class="sparkle">✨</span>
+          <span class="sparkle">💫</span>
+          <span class="sparkle">✨</span>
+          <span class="emoji-large">🌸</span>
+        </div>
+
+        <h1 class="title">Xin chào nè! 👋</h1>
+        <p class="subtitle">
+          Mình có một điều đặc biệt muốn nói với bạn...<br/>
+          Bạn có thể dành cho mình một chút thời gian được không? 🥰
+        </p>
+
+        <button class="btn btn-primary btn-start" id="btnStart" onclick="goToScreen('screen-invitation')">
+          Mình sẵn sàng rồi! 💕
+        </button>
+      </div>
+
+      <!-- ==================== SCREEN 2: INVITATION ==================== -->
+      <div class="screen" id="screen-invitation">
+        <div class="progress-dots">
+          <span class="dot active"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+        </div>
+
+        <div id="invitationContent">
+          <span class="emoji-large" id="invitationEmoji">💝</span>
+          <h1 class="title">Bạn ơi, đi hẹn hò với mình nhé!</h1>
+          <p class="subtitle">
+            Mình đã suy nghĩ rất nhiều, và mình thực sự muốn được dành thời gian bên bạn.<br/>
+            Bạn có muốn đi hẹn hò cùng mình không? 🌹
+          </p>
+
+          <div class="buttons-wrapper">
+            <button class="btn btn-primary btn-accept" id="btnAccept" onclick="handleAccept()">
+              Đồng ý 💖
+            </button>
+            <button class="btn btn-secondary btn-reject" id="btnReject" onclick="handleReject()">
+              Từ chối 😅
+            </button>
+          </div>
+
+          <div class="reject-message" id="rejectMessage">
+            <span class="emoji" id="rejectEmoji"></span>
+            <span class="text" id="rejectText"></span>
+          </div>
+        </div>
+
+        <div class="celebration" id="celebration">
+          <span class="celebrate-emoji">🥳</span>
+          <h1 class="title" style="margin-top: 16px;">YEAHHH! 🎉🎉🎉</h1>
+          <p class="subtitle">
+            Mình vui lắm luôn á!!! 😆💕<br/>
+            Cảm ơn bạn đã đồng ý nhé!
+          </p>
+          <button class="btn btn-primary btn-start" onclick="goToScreen('screen-date')">
+            Chọn ngày hẹn hò nào! 📅
+          </button>
+        </div>
+      </div>
+
+      <!-- ==================== SCREEN 3: DATE + TIME PICKER ==================== -->
+      <div class="screen" id="screen-date">
+        <div class="progress-dots">
+          <span class="dot done"></span>
+          <span class="dot active"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+        </div>
+
+        <span class="emoji-large">📅</span>
+        <h1 class="title">Chọn ngày & giờ hẹn hò nhé!</h1>
+        <p class="subtitle">
+          Bạn rảnh khi nào? Chọn thời gian phù hợp với bạn nha! 💫
+        </p>
+
+        <!-- Date Picker -->
+        <div class="picker-section">
+          <div class="picker-section-title">
+            <span>📆</span> Chọn ngày
+          </div>
+          <div class="date-picker-row">
+            <div class="select-wrapper">
+              <label for="selectDay">Ngày</label>
+              <select id="selectDay"><option value="">--</option></select>
+            </div>
+            <div class="select-wrapper">
+              <label for="selectMonth">Tháng</label>
+              <select id="selectMonth"><option value="">--</option></select>
+            </div>
+            <div class="select-wrapper">
+              <label for="selectYear">Năm</label>
+              <select id="selectYear"><option value="">--</option></select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Time Picker -->
+        <div class="picker-section">
+          <div class="picker-section-title">
+            <span>⏰</span> Chọn giờ
+          </div>
+          <div class="time-picker-row">
+            <div class="select-wrapper" style="max-width: 120px;">
+              <label for="selectHour">Giờ</label>
+              <select id="selectHour"><option value="">--</option></select>
+            </div>
+            <span class="time-separator">:</span>
+            <div class="select-wrapper" style="max-width: 120px;">
+              <label for="selectMinute">Phút</label>
+              <select id="selectMinute"><option value="">--</option></select>
+            </div>
+          </div>
+
+          <!-- Gợi ý giờ nhanh -->
+          <div class="time-presets">
+            <button class="time-preset" onclick="setTimePreset(9, 0, this)" type="button">☀️ 9:00 Sáng</button>
+            <button class="time-preset" onclick="setTimePreset(12, 0, this)" type="button">🌤️ 12:00 Trưa</button>
+            <button class="time-preset" onclick="setTimePreset(15, 0, this)" type="button">🌅 15:00 Chiều</button>
+            <button class="time-preset" onclick="setTimePreset(18, 30, this)" type="button">🌆 18:30 Tối</button>
+            <button class="time-preset" onclick="setTimePreset(20, 0, this)" type="button">🌙 20:00 Tối</button>
+          </div>
+        </div>
+
+        <p class="error-msg" id="dateError"></p>
+
+        <button class="btn btn-primary btn-start" onclick="handleDateNext()">
+          Tiếp tục ➡️
+        </button>
+      </div>
+
+      <!-- ==================== SCREEN 3.5: TRANSITION ==================== -->
+      <div class="screen" id="screen-transition">
+        <div class="progress-dots">
+          <span class="dot done"></span>
+          <span class="dot done"></span>
+          <span class="dot active"></span>
+          <span class="dot"></span>
+        </div>
+
+        <span class="emoji-large">🤗</span>
+        <h1 class="title">Tuyệt vời lắm!</h1>
+        <p class="subtitle">
+          Cho mình biết bạn thích hoạt động nào để mình có thể chuẩn bị thật tốt cho buổi hẹn nhé! <span class="highlight">&lt;3</span>
+        </p>
+
+        <button class="btn btn-primary btn-start" onclick="goToScreen('screen-activity')">
+          Chọn hoạt động 🎯
+        </button>
+      </div>
+
+      <!-- ==================== SCREEN 4: ACTIVITY SELECTION ==================== -->
+      <div class="screen" id="screen-activity">
+        <div class="progress-dots">
+          <span class="dot done"></span>
+          <span class="dot done"></span>
+          <span class="dot active"></span>
+          <span class="dot"></span>
+        </div>
+
+        <span class="emoji-large">🎭</span>
+        <h1 class="title">Bạn muốn làm gì nè?</h1>
+        <p class="subtitle">Chọn một hoặc nhiều hoạt động mà bạn thích nhé! 🌟</p>
+
+        <div class="activities-grid" id="activitiesGrid"></div>
+        <p class="error-msg" id="activityError"></p>
+
+        <button class="btn btn-primary btn-start" onclick="handleFinish()">
+          Hoàn thành 🎉
+        </button>
+      </div>
+
+      <!-- ==================== SCREEN 5: THANK YOU ==================== -->
+      <div class="screen" id="screen-thankyou">
+        <div class="progress-dots">
+          <span class="dot done"></span>
+          <span class="dot done"></span>
+          <span class="dot done"></span>
+          <span class="dot active"></span>
+        </div>
+
+        <span class="emoji-large">💑</span>
+        <h1 class="title">Hẹn gặp bạn nha! 🥰</h1>
+        <p class="subtitle">
+          Mình sẽ mong chờ đến ngày hẹn hò lắm đó!<br/>
+          Cảm ơn bạn rất nhiều nha! 💕
+        </p>
+
+        <div class="summary-box">
+          <div class="summary-item">
+            <span class="icon">📅</span>
+            <div class="info">
+              <div class="label">Ngày hẹn</div>
+              <div class="value" id="summaryDate">--</div>
+            </div>
+          </div>
+          <div class="summary-item">
+            <span class="icon">⏰</span>
+            <div class="info">
+              <div class="label">Giờ hẹn</div>
+              <div class="value" id="summaryTime">--</div>
+            </div>
+          </div>
+          <div class="summary-item">
+            <span class="icon">🎯</span>
+            <div class="info">
+              <div class="label">Hoạt động</div>
+              <div class="value" id="summaryActivity">--</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="countdown-note" id="countdownNote"></div>
+
+        <div class="email-section">
+          <p class="subtitle" style="margin-bottom: 8px; font-size: 0.9rem;">
+            Nhập email của bạn để mình gửi xác nhận nhé! 📧
+          </p>
+          <div class="input-group">
+            <input type="email" id="userEmail" placeholder="email@example.com" />
+            <button class="btn btn-primary" id="btnSendEmail" onclick="handleSendEmail()">
+              Gửi 💌
+            </button>
+          </div>
+          <p class="error-msg" id="emailError"></p>
+          <p class="error-msg" id="emailSuccess" style="color: var(--pink-600);"></p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===== JAVASCRIPT ===== -->
+  <script>
+    /**
+     * ============================================
+     * MAIN APPLICATION LOGIC v2.0
+     * Thêm: Time Picker + Background Music
+     * ============================================
+     */
+
+    // ===== STATE =====
+    const state = {
+      rejectCount: 0,
+      selectedDate: { day: '', month: '', year: '' },
+      selectedTime: { hour: '', minute: '' },
+      selectedActivities: [],
+      acceptScale: 1,
+      rejectScale: 1,
+      musicPlaying: false
+    };
+
+    // ===== CONSTANTS =====
+    const REJECT_MESSAGES = [
+      { emoji: '🥺', text: 'Are you sure?' },
+      { emoji: '😢', text: "Please don't..." },
+      { emoji: '😿', text: 'Mình sẽ buồn lắm đó...' },
+      { emoji: '🥹', text: 'Cho mình một cơ hội nhé?' },
+      { emoji: '😭', text: 'Đừng mà...' },
+      { emoji: '💔', text: 'Mình hứa sẽ rất vui mà!' },
+      { emoji: '🫠', text: 'Suy nghĩ lại đi mà...' },
+      { emoji: '😞', text: 'Lần cuối rồi nha...' },
+      { emoji: '🥀', text: 'Bạn thật sự muốn vậy sao?' },
+      { emoji: '😤', text: 'Mình không từ bỏ đâu!' },
+      { emoji: '🐱', text: 'Ngay cả mèo con cũng buồn...' },
+      { emoji: '🌧️', text: 'Trời cũng mưa vì bạn từ chối...' }
+    ];
+
+    const ACTIVITIES = [
+      { id: 'movie',   icon: '🎬', name: 'Xem phim' },
+      { id: 'cafe',    icon: '☕', name: 'Cafe & đi dạo' },
+      { id: 'work',    icon: '💻', name: 'Work date' },
+      { id: 'dinner',  icon: '🍽️', name: 'Ăn tối lãng mạn' },
+      { id: 'music',   icon: '🎵', name: 'Nghe nhạc live' },
+      { id: 'picnic',  icon: '🧺', name: 'Picnic công viên' },
+      { id: 'cooking', icon: '👨‍🍳', name: 'Nấu ăn cùng nhau' },
+      { id: 'karaoke', icon: '🎤', name: 'Hát karaoke' }
+    ];
+
+    // ===== INITIALIZATION =====
+    document.addEventListener('DOMContentLoaded', () => {
+      initFloatingHearts();
+      initDatePicker();
+      initTimePicker();
+      initActivities();
+      initEnvelope();
+      initMusicTooltip();
+    });
+
+    // ===== FLOATING HEARTS =====
+    function initFloatingHearts() {
+      const container = document.getElementById('heartsBg');
+      const emojis = ['💕', '💖', '💗', '💓', '💝', '🩷', '🌸', '✨'];
+      for (let i = 0; i < 20; i++) {
+        const h = document.createElement('span');
+        h.classList.add('floating-heart');
+        h.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        h.style.left = Math.random() * 100 + '%';
+        h.style.fontSize = (0.8 + Math.random() * 1.2) + 'rem';
+        h.style.animationDuration = (8 + Math.random() * 12) + 's';
+        h.style.animationDelay = (Math.random() * 15) + 's';
+        container.appendChild(h);
+      }
+    }
+
+    function initEnvelope() {
+      setTimeout(() => document.getElementById('envelope').classList.add('opened'), 1000);
+    }
+
+    // ===== MUSIC TOOLTIP =====
+    function initMusicTooltip() {
+      const tooltip = document.getElementById('musicTooltip');
+      // Hiển thị tooltip gợi ý bật nhạc sau 3 giây
+      setTimeout(() => {
+        tooltip.classList.add('show');
+        setTimeout(() => tooltip.classList.remove('show'), 4000);
+      }, 3000);
+    }
+
+    // ===== SCREEN NAVIGATION =====
+    function goToScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      const target = document.getElementById(screenId);
+      if (target) target.classList.add('active');
+    }
+
+    // ===== SCREEN 2: INVITATION =====
+    function handleReject() {
+      state.rejectCount++;
+      const btnAccept = document.getElementById('btnAccept');
+      const btnReject = document.getElementById('btnReject');
+      const rejectMsg = document.getElementById('rejectMessage');
+
+      state.acceptScale = Math.min(1 + state.rejectCount * 0.2, 2.5);
+      btnAccept.style.transform = `scale(${state.acceptScale})`;
+
+      state.rejectScale = Math.max(1 - state.rejectCount * 0.1, 0.3);
+      btnReject.style.transform = `scale(${state.rejectScale})`;
+
+      const msgIndex = Math.min(state.rejectCount - 1, REJECT_MESSAGES.length - 1);
+      const msg = REJECT_MESSAGES[msgIndex];
+      document.getElementById('rejectEmoji').textContent = msg.emoji;
+      document.getElementById('rejectText').textContent = msg.text;
+      rejectMsg.classList.remove('show');
+      void rejectMsg.offsetWidth;
+      rejectMsg.classList.add('show');
+
+      if (state.rejectScale <= 0.3) {
+        setTimeout(() => {
+          btnReject.style.opacity = '0';
+          btnReject.style.pointerEvents = 'none';
+          document.getElementById('rejectText').textContent = 'Nút từ chối đã biến mất rồi... 😏';
+          document.getElementById('rejectEmoji').textContent = '😏';
+        }, 300);
+      }
+    }
+
+    function handleAccept() {
+      document.getElementById('invitationContent').style.display = 'none';
+      document.getElementById('celebration').classList.add('show');
+      launchConfetti();
+      showToast('💖 Yeayyy! Mình vui quá đi!');
+      // Tự động bật nhạc khi đồng ý (nếu chưa bật)
+      if (!state.musicPlaying) {
+        toggleMusic();
+      }
+    }
+
+    // ===== DATE PICKER =====
+    function initDatePicker() {
+      const daySelect = document.getElementById('selectDay');
+      const monthSelect = document.getElementById('selectMonth');
+      const yearSelect = document.getElementById('selectYear');
+
+      for (let d = 1; d <= 31; d++) {
+        const opt = document.createElement('option');
+        opt.value = d;
+        opt.textContent = d < 10 ? '0' + d : d;
+        daySelect.appendChild(opt);
+      }
+
+      const months = ['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6',
+                       'Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
+      months.forEach((name, i) => {
+        const opt = document.createElement('option');
+        opt.value = i + 1;
+        opt.textContent = name;
+        monthSelect.appendChild(opt);
+      });
+
+      const currentYear = new Date().getFullYear();
+      for (let y = currentYear; y <= currentYear + 1; y++) {
+        const opt = document.createElement('option');
+        opt.value = y;
+        opt.textContent = y;
+        yearSelect.appendChild(opt);
+      }
+    }
+
+    // ===== TIME PICKER (MỚI) =====
+    function initTimePicker() {
+      const hourSelect = document.getElementById('selectHour');
+      const minuteSelect = document.getElementById('selectMinute');
+
+      // Giờ: 7:00 → 23:00
+      for (let h = 7; h <= 23; h++) {
+        const opt = document.createElement('option');
+        opt.value = h;
+        opt.textContent = h < 10 ? '0' + h : h;
+        hourSelect.appendChild(opt);
+      }
+
+      // Phút: 00, 05, 10, 15, ..., 55
+      for (let m = 0; m < 60; m += 5) {
+        const opt = document.createElement('option');
+        opt.value = m;
+        opt.textContent = m < 10 ? '0' + m : m;
+        minuteSelect.appendChild(opt);
+      }
+    }
+
+    /**
+     * Chọn nhanh giờ từ preset buttons
+     */
+    function setTimePreset(hour, minute, btnEl) {
+      document.getElementById('selectHour').value = hour;
+      document.getElementById('selectMinute').value = minute;
+
+      // Highlight preset đang chọn
+      document.querySelectorAll('.time-preset').forEach(b => b.classList.remove('active'));
+      if (btnEl) btnEl.classList.add('active');
+
+      // Clear error
+      document.getElementById('dateError').textContent = '';
+    }
+
+    /**
+     * Format giờ đẹp: "18:30 — Buổi tối 🌆"
+     */
+    function formatTime(hour, minute) {
+      const h = parseInt(hour);
+      const m = parseInt(minute);
+      const timeStr = `${h < 10 ? '0' + h : h}:${m < 10 ? '0' + m : m}`;
+
+      let period = '';
+      if (h >= 5 && h < 12)  period = '☀️ Buổi sáng';
+      else if (h >= 12 && h < 14) period = '🌤️ Buổi trưa';
+      else if (h >= 14 && h < 17) period = '🌅 Buổi chiều';
+      else if (h >= 17 && h < 21) period = '🌆 Buổi tối';
+      else period = '🌙 Buổi khuya';
+
+      return `${timeStr} — ${period}`;
+    }
+
+    // ===== DATE + TIME VALIDATION & NEXT =====
+    function handleDateNext() {
+      const day = document.getElementById('selectDay').value;
+      const month = document.getElementById('selectMonth').value;
+      const year = document.getElementById('selectYear').value;
+      const hour = document.getElementById('selectHour').value;
+      const minute = document.getElementById('selectMinute').value;
+      const errorEl = document.getElementById('dateError');
+
+      // Validate ngày tháng
+      if (!day || !month || !year) {
+        errorEl.textContent = '⚠️ Bạn hãy chọn đầy đủ ngày tháng năm nhé!';
+        return;
+      }
+
+      const daysInMonth = new Date(year, month, 0).getDate();
+      if (parseInt(day) > daysInMonth) {
+        errorEl.textContent = `⚠️ Tháng ${month} chỉ có ${daysInMonth} ngày thôi nha!`;
+        return;
+      }
+
+      const selectedDate = new Date(year, month - 1, day);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (selectedDate < today) {
+        errorEl.textContent = '⚠️ Chọn ngày trong tương lai nha bạn! ✨';
+        return;
+      }
+
+      // Validate giờ
+      if (hour === '' || minute === '') {
+        errorEl.textContent = '⚠️ Chọn giờ hẹn nữa nha bạn! ⏰';
+        return;
+      }
+
+      // Lưu state
+      state.selectedDate = { day, month, year };
+      state.selectedTime = { hour, minute };
+      errorEl.textContent = '';
+
+      goToScreen('screen-transition');
+    }
+
+    // ===== ACTIVITIES =====
+    function initActivities() {
+      const grid = document.getElementById('activitiesGrid');
+      ACTIVITIES.forEach(activity => {
+        const card = document.createElement('label');
+        card.classList.add('activity-card');
+        card.setAttribute('for', `act-${activity.id}`);
+        card.innerHTML = `
+          <input type="checkbox" id="act-${activity.id}" value="${activity.id}"
+                 onchange="toggleActivity('${activity.id}', this.checked)" />
+          <span class="activity-icon">${activity.icon}</span>
+          <span class="activity-name">${activity.name}</span>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function toggleActivity(id, checked) {
+      const card = document.querySelector(`label[for="act-${id}"]`);
+      if (checked) {
+        state.selectedActivities.push(id);
+        card.classList.add('selected');
+      } else {
+        state.selectedActivities = state.selectedActivities.filter(a => a !== id);
+        card.classList.remove('selected');
+      }
+      document.getElementById('activityError').textContent = '';
+    }
+
+    function handleFinish() {
+      if (state.selectedActivities.length === 0) {
+        document.getElementById('activityError').textContent = '⚠️ Chọn ít nhất một hoạt động nhé bạn!';
+        return;
+      }
+      renderThankYou();
+      goToScreen('screen-thankyou');
+      launchConfetti();
+      showToast('🎉 Hoàn thành! Hẹn gặp bạn nha!');
+    }
+
+    // ===== THANK YOU =====
+    function renderThankYou() {
+      const { day, month, year } = state.selectedDate;
+      const { hour, minute } = state.selectedTime;
+
+      const dateStr = `${String(day).padStart(2,'0')}/${String(month).padStart(2,'0')}/${year}`;
+      document.getElementById('summaryDate').textContent = dateStr;
+
+      // Hiển thị giờ
+      document.getElementById('summaryTime').textContent = formatTime(hour, minute);
+
+      const actNames = state.selectedActivities.map(id => {
+        const a = ACTIVITIES.find(x => x.id === id);
+        return a ? `${a.icon} ${a.name}` : id;
+      });
+      document.getElementById('summaryActivity').textContent = actNames.join(', ');
+
+      // Countdown
+      const selectedDate = new Date(year, month - 1, day);
+      const today = new Date(); today.setHours(0,0,0,0);
+      const diffDays = Math.ceil((selectedDate - today) / (1000 * 60 * 60 * 24));
+
+      const el = document.getElementById('countdownNote');
+      if (diffDays === 0)      el.textContent = '💝 Là hôm nay luôn nè! Mình hào hứng lắm!';
+      else if (diffDays === 1) el.textContent = '💝 Ngày mai thôi! Mình không ngủ được mất!';
+      else                     el.textContent = `💝 Còn ${diffDays} ngày nữa thôi! Mình đếm từng ngày luôn á!`;
+    }
+
+    // ===== EMAIL =====
+    const EMAILJS_CONFIG = {
+      publicKey: 'YOUR_PUBLIC_KEY',
+      serviceId: 'YOUR_SERVICE_ID',
+      templateId: 'YOUR_TEMPLATE_ID'
+    };
+
+    function handleSendEmail() {
+      const email = document.getElementById('userEmail').value.trim();
+      const errorEl = document.getElementById('emailError');
+      const successEl = document.getElementById('emailSuccess');
+      const btn = document.getElementById('btnSendEmail');
+
+      if (!email) { errorEl.textContent = '⚠️ Nhập email của bạn nhé!'; successEl.textContent = ''; return; }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { errorEl.textContent = '⚠️ Email không hợp lệ rồi!'; successEl.textContent = ''; return; }
+
+      errorEl.textContent = ''; successEl.textContent = '';
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Đang gửi...';
+
+      const { day, month, year } = state.selectedDate;
+      const { hour, minute } = state.selectedTime;
+      const dateStr = `${String(day).padStart(2,'0')}/${String(month).padStart(2,'0')}/${year}`;
+      const timeStr = formatTime(hour, minute);
+      const actNames = state.selectedActivities.map(id => {
+        const a = ACTIVITIES.find(x => x.id === id);
+        return a ? a.name : id;
+      }).join(', ');
+
+      if (EMAILJS_CONFIG.publicKey === 'YOUR_PUBLIC_KEY') {
+        setTimeout(() => {
+          console.log('📧 EMAIL DATA (Demo Mode):');
+          console.log('   Ngày hẹn:', dateStr);
+          console.log('   Giờ hẹn:', timeStr);
+          console.log('   Hoạt động:', actNames);
+          console.log('   Email:', email);
+          successEl.textContent = '✅ Đã lưu thông tin! (Demo mode — xem Console)';
+          btn.disabled = true;
+          btn.innerHTML = 'Đã gửi ✅';
+          showToast('📧 Thông tin đã được lưu!');
+        }, 1500);
+        return;
+      }
+
+      emailjs.init(EMAILJS_CONFIG.publicKey);
+      emailjs.send(EMAILJS_CONFIG.serviceId, EMAILJS_CONFIG.templateId, {
+        date: dateStr, time: timeStr, activities: actNames,
+        user_email: email, to_email: email
+      }).then(() => {
+        successEl.textContent = '✅ Gửi email thành công! Kiểm tra hộp thư nhé! 💌';
+        btn.disabled = true; btn.innerHTML = 'Đã gửi ✅';
+        showToast('📧 Email đã gửi thành công!');
+      }).catch(err => {
+        console.error('EmailJS Error:', err);
+        errorEl.textContent = '❌ Gửi thất bại. Thử lại sau nhé!';
+        btn.disabled = false; btn.innerHTML = 'Gửi 💌';
+      });
+    }
+
+    // =============================================================
+    //  🎵 BACKGROUND MUSIC — Web Audio API Romantic Music Generator
+    //  Tạo nhạc ambient romantic trực tiếp, không cần file ngoài
+    // =============================================================
+
+    let audioCtx = null;
+    let musicNodes = [];
+    let musicInterval = null;
+    let masterGain = null;
+
+    /**
+     * Khởi tạo Web Audio API context
+     */
+    function initAudioContext() {
+      if (audioCtx) return;
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+      // Master gain cho volume control
+      masterGain = audioCtx.createGain();
+      masterGain.gain.value = 0;
+      masterGain.connect(audioCtx.destination);
+    }
+
+    /**
+     * Nốt nhạc theo tần số (Hz) — scale pentatonic romantic
+     * Sử dụng C major pentatonic + thêm vài nốt tạo cảm giác dreamy
+     */
+    const ROMANTIC_NOTES = {
+      // Octave 3 (bass pad)
+      C3: 130.81, E3: 164.81, G3: 196.00, A3: 220.00, B3: 246.94,
+      // Octave 4 (melody)
+      C4: 261.63, D4: 293.66, E4: 329.63, F4: 349.23,
+      G4: 392.00, A4: 440.00, B4: 493.88,
+      // Octave 5 (sparkle)
+      C5: 523.25, D5: 587.33, E5: 659.25, G5: 783.99
+    };
+
+    /**
+     * Tạo một nốt nhạc mềm mại (sine wave + envelope)
+     */
+    function playNote(freq, startTime, duration, volume = 0.08, type = 'sine') {
+      if (!audioCtx || !masterGain) return;
+
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, startTime);
+
+      // Thêm vibrato nhẹ cho cảm giác dreamy
+      const vibrato = audioCtx.createOscillator();
+      const vibratoGain = audioCtx.createGain();
+      vibrato.frequency.value = 4; // 4Hz vibrato
+      vibratoGain.gain.value = 2; // rất nhẹ
+      vibrato.connect(vibratoGain);
+      vibratoGain.connect(osc.frequency);
+      vibrato.start(startTime);
+      vibrato.stop(startTime + duration + 0.5);
+
+      // ADSR Envelope: mềm mại
+      gain.gain.setValueAtTime(0, startTime);
+      gain.gain.linearRampToValueAtTime(volume, startTime + 0.15); // Attack
+      gain.gain.linearRampToValueAtTime(volume * 0.7, startTime + 0.3); // Decay
+      gain.gain.setValueAtTime(volume * 0.7, startTime + duration - 0.4); // Sustain
+      gain.gain.linearRampToValueAtTime(0, startTime + duration); // Release
+
+      osc.connect(gain);
+      gain.connect(masterGain);
+
+      osc.start(startTime);
+      osc.stop(startTime + duration + 0.1);
+
+      musicNodes.push(osc, vibrato);
+    }
+
+    /**
+     * Tạo chord pad (nền hòa âm mềm)
+     */
+    function playChordPad(notes, startTime, duration) {
+      notes.forEach(freq => {
+        playNote(freq, startTime, duration, 0.04, 'sine');
+        // Thêm layer triangle nhẹ cho ấm hơn
+        playNote(freq, startTime, duration, 0.015, 'triangle');
+      });
+    }
+
+    /**
+     * Tạo melody note (nốt giai điệu)
+     */
+    function playMelodyNote(freq, startTime, duration) {
+      // Sine chính
+      playNote(freq, startTime, duration, 0.07, 'sine');
+      // Triangle layer nhẹ octave trên
+      playNote(freq * 2, startTime + 0.05, duration * 0.6, 0.02, 'triangle');
+    }
+
+    /**
+     * Các chord progression romantic
+     * I - vi - IV - V trong C major
+     */
+    const CHORD_PROGRESSIONS = [
+      // Cmaj
+      [ROMANTIC_NOTES.C3, ROMANTIC_NOTES.E3, ROMANTIC_NOTES.G3],
+      // Am
+      [ROMANTIC_NOTES.A3, ROMANTIC_NOTES.C4, ROMANTIC_NOTES.E4],
+      // Fmaj
+      [ROMANTIC_NOTES.F4 / 2, ROMANTIC_NOTES.A3, ROMANTIC_NOTES.C4],
+      // Gmaj
+      [ROMANTIC_NOTES.G3, ROMANTIC_NOTES.B3, ROMANTIC_NOTES.D4],
+      // Em
+      [ROMANTIC_NOTES.E3, ROMANTIC_NOTES.G3, ROMANTIC_NOTES.B3],
+      // Am
+      [ROMANTIC_NOTES.A3, ROMANTIC_NOTES.C4, ROMANTIC_NOTES.E4],
+      // Dm
+      [ROMANTIC_NOTES.D4 / 2, ROMANTIC_NOTES.F4 / 2, ROMANTIC_NOTES.A3],
+      // Gmaj
+      [ROMANTIC_NOTES.G3, ROMANTIC_NOTES.B3, ROMANTIC_NOTES.D4]
+    ];
+
+    /**
+     * Các melody pattern romantic
+     */
+    const MELODY_PATTERNS = [
+      [ROMANTIC_NOTES.E4, ROMANTIC_NOTES.G4, ROMANTIC_NOTES.A4, ROMANTIC_NOTES.G4],
+      [ROMANTIC_NOTES.C5, ROMANTIC_NOTES.B4, ROMANTIC_NOTES.G4, ROMANTIC_NOTES.E4],
+      [ROMANTIC_NOTES.D5, ROMANTIC_NOTES.C5, ROMANTIC_NOTES.A4, ROMANTIC_NOTES.G4],
+      [ROMANTIC_NOTES.E5, ROMANTIC_NOTES.D5, ROMANTIC_NOTES.C5, ROMANTIC_NOTES.G4],
+      [ROMANTIC_NOTES.G4, ROMANTIC_NOTES.A4, ROMANTIC_NOTES.C5, ROMANTIC_NOTES.E5],
+      [ROMANTIC_NOTES.A4, ROMANTIC_NOTES.G4, ROMANTIC_NOTES.E4, ROMANTIC_NOTES.D4],
+      [ROMANTIC_NOTES.C5, ROMANTIC_NOTES.E5, ROMANTIC_NOTES.D5, ROMANTIC_NOTES.C5],
+      [ROMANTIC_NOTES.B4, ROMANTIC_NOTES.A4, ROMANTIC_NOTES.G4, ROMANTIC_NOTES.A4]
+    ];
+
+    let currentChordIndex = 0;
+    let currentBar = 0;
+
+    /**
+     * Phát một đoạn nhạc (1 bar = 4 beats)
+     * Mỗi bar: 1 chord pad + melody pattern
+     */
+    function playMusicBar() {
+      if (!audioCtx || !state.musicPlaying) return;
+
+      const now = audioCtx.currentTime;
+      const barDuration = 4.0; // 4 giây mỗi bar (= BPM 60)
+      const beatDuration = barDuration / 4;
+
+      // Chọn chord
+      const chordIdx = currentChordIndex % CHORD_PROGRESSIONS.length;
+      const chord = CHORD_PROGRESSIONS[chordIdx];
+
+      // Pad chord nền (kéo dài cả bar)
+      playChordPad(chord, now + 0.05, barDuration - 0.2);
+
+      // Melody pattern
+      const melodyIdx = currentChordIndex % MELODY_PATTERNS.length;
+      const melody = MELODY_PATTERNS[melodyIdx];
+
+      melody.forEach((note, i) => {
+        // Random hóa nhẹ timing cho tự nhiên
+        const offset = i * beatDuration + (Math.random() * 0.1);
+        const noteDuration = beatDuration * (0.6 + Math.random() * 0.3);
+
+        // Không phải lúc nào cũng chơi hết 4 nốt (thêm khoảng lặng)
+        if (Math.random() > 0.15) {
+          playMelodyNote(note, now + offset, noteDuration);
+        }
+
+        // Đôi khi thêm nốt sparkle octave trên
+        if (Math.random() > 0.75) {
+          playNote(note * 2, now + offset + 0.3, noteDuration * 0.4, 0.02, 'sine');
+        }
+      });
+
+      currentChordIndex++;
+      currentBar++;
+    }
+
+    /**
+     * Bật/tắt nhạc nền
+     */
+    function toggleMusic() {
+      const btn = document.getElementById('musicToggle');
+      const notes = document.getElementById('musicNotes');
+      const tooltip = document.getElementById('musicTooltip');
+
+      if (!state.musicPlaying) {
+        // === BẬT NHẠC ===
+        state.musicPlaying = true;
+        btn.classList.add('playing');
+        notes.classList.add('show');
+        tooltip.textContent = '🎵 Đang phát nhạc nền';
+        tooltip.classList.add('show');
+        setTimeout(() => tooltip.classList.remove('show'), 2000);
+
+        initAudioContext();
+
+        // Resume context nếu bị suspended (trình duyệt yêu cầu)
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+
+        // Fade in master volume
+        masterGain.gain.cancelScheduledValues(audioCtx.currentTime);
+        masterGain.gain.setValueAtTime(masterGain.gain.value, audioCtx.currentTime);
+        masterGain.gain.linearRampToValueAtTime(1.0, audioCtx.currentTime + 1.5);
+
+        // Reset
+        currentChordIndex = 0;
+        currentBar = 0;
+
+        // Phát bar đầu tiên
+        playMusicBar();
+
+        // Lặp mỗi 4 giây (mỗi bar)
+        musicInterval = setInterval(() => {
+          if (state.musicPlaying) {
+            playMusicBar();
+          }
+        }, 4000);
+
+        showToast('🎵 Nhạc nền đã bật');
+
+      } else {
+        // === TẮT NHẠC ===
+        state.musicPlaying = false;
+        btn.classList.remove('playing');
+        notes.classList.remove('show');
+
+        tooltip.textContent = '🔇 Đã tắt nhạc';
+        tooltip.classList.add('show');
+        setTimeout(() => tooltip.classList.remove('show'), 2000);
+
+        // Fade out
+        if (masterGain && audioCtx) {
+          masterGain.gain.cancelScheduledValues(audioCtx.currentTime);
+          masterGain.gain.setValueAtTime(masterGain.gain.value, audioCtx.currentTime);
+          masterGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.0);
+        }
+
+        // Dừng interval
+        if (musicInterval) {
+          clearInterval(musicInterval);
+          musicInterval = null;
+        }
+
+        showToast('🔇 Đã tắt nhạc nền');
+      }
+    }
+
+    // ===== CONFETTI =====
+    function launchConfetti() {
+      const canvas = document.getElementById('confetti-canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      const pieces = [];
+      const colors = ['#ff6b8a','#ff8fab','#ffc2d1','#ffd700','#ff69b4','#87ceeb','#98fb98','#dda0dd'];
+      const shapes = ['circle','rect','heart'];
+
+      for (let i = 0; i < 150; i++) {
+        pieces.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height - canvas.height,
+          w: 6 + Math.random() * 8, h: 4 + Math.random() * 6,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          shape: shapes[Math.floor(Math.random() * shapes.length)],
+          vx: (Math.random() - 0.5) * 4, vy: 2 + Math.random() * 4,
+          rotation: Math.random() * 360,
+          rotationSpeed: (Math.random() - 0.5) * 10,
+          opacity: 1
+        });
+      }
+
+      let frame = 0;
+      const MAX = 180;
+
+      function animate() {
+        frame++;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const fadeStart = MAX * 0.65;
+
+        pieces.forEach(p => {
+          p.x += p.vx; p.y += p.vy;
+          p.rotation += p.rotationSpeed; p.vy += 0.05;
+          if (frame > fadeStart) p.opacity = Math.max(0, 1 - (frame - fadeStart) / (MAX - fadeStart));
+
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rotation * Math.PI / 180);
+          ctx.globalAlpha = p.opacity;
+          ctx.fillStyle = p.color;
+
+          if (p.shape === 'circle') {
+            ctx.beginPath(); ctx.arc(0, 0, p.w / 2, 0, Math.PI * 2); ctx.fill();
+          } else if (p.shape === 'rect') {
+            ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+          } else {
+            const s = p.w / 3;
+            ctx.beginPath(); ctx.moveTo(0, s);
+            ctx.bezierCurveTo(s, -s, 2*s, s/2, 0, 2*s);
+            ctx.bezierCurveTo(-2*s, s/2, -s, -s, 0, s);
+            ctx.fill();
+          }
+          ctx.restore();
+        });
+
+        if (frame < MAX) requestAnimationFrame(animate);
+        else ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+      animate();
+    }
+
+    // ===== TOAST =====
+    function showToast(message, duration = 3000) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), duration);
+    }
+
+    // ===== RESIZE =====
+    window.addEventListener('resize', () => {
+      const c = document.getElementById('confetti-canvas');
+      c.width = window.innerWidth; c.height = window.innerHeight;
+    });
+  </script>
+</body>
+</html>
